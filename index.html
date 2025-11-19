@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngBoost Pro - 雅思托福备考</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            user-select: none; /* 防止频繁点击选中文本 */
+        }
+
+        header { text-align: center; margin-bottom: 25px; }
+        header h1 { color: var(--primary); font-size: 2.2rem; margin: 0 0 5px 0; }
+        header p { color: #6b7280; margin: 0; }
+
+        /* 模式切换 */
+        .mode-switch {
+            background: white;
+            padding: 5px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 5px;
+        }
+        .mode-btn {
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+        .mode-btn.active { background: var(--primary); color: white; }
+
+        /* 卡片容器 */
+        .scene {
+            width: 100%;
+            max-width: 450px;
+            height: 360px;
+            perspective: 1000px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            border-radius: 24px;
+        }
+
+        .card.is-flipped { transform: rotateY(180deg); }
+
+        .card__face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            box-sizing: border-box;
+            background: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card__face--front { background: linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%); }
+        .card__face--back { 
+            background: linear-gradient(145deg, #fff1f2 0%, #fff 100%); 
+            transform: rotateY(180deg); 
+        }
+
+        /* 标签与内容 */
+        .tag {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .word-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .word { font-size: 2.8rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1.1; text-align: center; }
+        .pronunciation { color: #6b7280; font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.1rem; }
+
+        .definition { font-size: 1.6rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; text-align: center; }
+        
+        .example-box {
+            background: rgba(255,255,255,0.7);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid var(--secondary);
+            width: 100%;
+        }
+        .en-sentence { font-size: 1.1rem; color: #374151; margin-bottom: 8px; line-height: 1.5; font-weight: 500; }
+        .cn-sentence { font-size: 0.9rem; color: #9ca3af; }
+
+        /* 喇叭按钮 */
+        .audio-btn {
+            background: #e0e7ff;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            color: var(--primary);
+        }
+        .audio-btn:hover { transform: scale(1.1); background: #c7d2fe; }
+        .audio-btn:active { transform: scale(0.9); }
+        .audio-icon { width: 18px; height: 18px; fill: currentColor; }
+
+        /* 底部控制区 */
+        .controls { display: flex; gap: 15px; width: 100%; max-width: 450px; }
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.1s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:active { transform: translateY(2px); box-shadow: none; }
+        .btn-forget { background-color: white; color: var(--text); border: 2px solid #e5e7eb; }
+        .btn-know { background-color: var(--text); }
+
+        /* 进度条 */
+        .progress-wrapper {
+            width: 100%; max-width: 450px; margin-top: 25px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .progress-bg {
+            flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--secondary); width: 0%; transition: width 0.4s ease;
+        }
+        .progress-text { font-size: 0.85rem; color: #6b7280; font-weight: 600; min-width: 60px; text-align: right; }
+
+        .msg-toast {
+            position: fixed; top: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+            border-radius: 30px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="msg-toast" id="toast">进度已保存</div>
+
+    <header>
+        <h1>EngBoost <span style="font-size:1rem; vertical-align:middle; background:#10b981; color:white; padding:2px 8px; border-radius:6px;">Pro</span></h1>
+        <p>雅思托福 · 沉浸式学习</p>
+    </header>
+
+    <div class="mode-switch">
+        <button class="mode-btn active" onclick="app.switchMode('vocab')">📖 核心词汇</button>
+        <button class="mode-btn" onclick="app.switchMode('speaking')">🗣️ 场景口语</button>
+    </div>
+
+    <div class="scene">
+        <div class="card" id="flashcard" onclick="app.flipCard(event)">
+            <div class="card__face card__face--front">
+                <div class="tag" id="tag">TAG</div>
+                <div class="word-container">
+                    <h2 class="word" id="word">Word</h2>
+                    <button class="audio-btn" onclick="app.speak(event, 'word')">
+                        <svg class="audio-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    </button>
+                </div>
+                <p class="pronunciation" id="pron">/pron/</p>
+                <p style="margin-top:40px; color:#9ca3af; font-size:0.9rem;">Tap to flip 👆</p>
+            </div>
+
+            <div class="card__face card__face--back">
+                <div class="definition" id="definition">Definition</div>
+                <div class="example-box">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:5px;">
+                        <div class="en-sentence" id="ex-en">Example sentence.</div>
+                        <button class="audio-btn" style="width:28px; height:28px; flex-shrink:0;" onclick="app.speak(event, 'sentence')">
+                            <svg class="audio-icon" style="width:14px; height:14px;" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                    </div>
+                    <div class="cn-sentence" id="ex-cn">中文翻译</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-forget" onclick="app.handleResult(false)">🤔 没记住</button>
+        <button class="btn btn-know" onclick="app.handleResult(true)">⚡ 记住了</button>
+    </div>
+
+    <div class="progress-wrapper">
+        <div class="progress-bg"><div class="progress-fill" id="progress-bar"></div></div>
+        <div class="progress-text"><span id="progress-count">0</span> / 20</div>
+    </div>
+
+    <script>
+        const app = {
+            data: {
+                vocab: [
+                    { word: "Ubiquitous", pron: "/juːˈbɪkwɪtəs/", def: "无处不在的", tag: "TOEFL Core", en: "Smartphones are becoming ubiquitous in modern society.", cn: "智能手机在现代社会中正变得无处不在。" },
+                    { word: "Mitigate", pron: "/ˈmɪtɪɡeɪt/", def: "缓解；减轻", tag: "IELTS Writing", en: "It is unclear how to mitigate the effects of tourism on the island.", cn: "目前尚不清楚如何减轻旅游业对该岛屿的影响。" },
+                    { word: "Pragmatic", pron: "/præɡˈmætɪk/", def: "务实的；实用的", tag: "Daily/Work", en: "We need to adopt a pragmatic approach to this complex problem.", cn: "我们需要采取务实的方法来解决这个复杂的问题。" },
+                    { word: "Eloquent", pron: "/ˈeləkwənt/", def: "雄辩的；有口才的", tag: "GRE/Adv", en: "She gave an eloquent speech that moved the audience to tears.", cn: "她发表了一场感人的演讲，让观众热泪盈眶。" },
+                    { word: "Procrastinate", pron: "/prəˈkræstɪneɪt/", def: "拖延；耽搁", tag: "Campus Life", en: "Most students procrastinate until the night before the exam.", cn: "大多数学生都会拖到考试前一天晚上才开始复习。" },
+                    { word: "Inevitable", pron: "/ɪnˈevɪtəbl/", def: "不可避免的", tag: "Reading", en: "Change is inevitable in any growing organization.", cn: "在任何成长的组织中，变化都是不可避免的。" }
+                ],
+                speaking: [
+                    { word: "Hit the books", pron: "Idiom", def: "用功读书；复习", tag: "Campus", en: "I can't go out tonight, I gotta hit the books.", cn: "今晚我不能出去，我得用功读书了。" },
+                    { word: "Once in a blue moon", pron: "Idiom", def: "千载难逢；极少", tag: "Part 1", en: "I see my old college friends once in a blue moon.", cn: "我很难得见到我的大学老朋友们。" },
+                    { word: "Burn the midnight oil", pron: "Idiom", def: "挑灯夜战；熬夜", tag: "Work", en: "We had to burn the midnight oil to meet the deadline.", cn: "为了赶截止日期，我们不得不熬夜工作。" },
+                    { word: "See eye to eye", pron: "Idiom", def: "看法一致", tag: "Part 3", en: "My father and I don't always see eye to eye on politics.", cn: "我和我父亲在政治问题上看法并不总是一致。" }
+                ]
+            },
+            
+            state: {
+                currentMode: 'vocab', // 'vocab' or 'speaking'
+                currentIndex: 0,
+                learnedCount: 0,
+                dailyGoal: 20,
+                currentList: []
+            },
+
+            init() {
+                // 从本地存储加载进度
+                const savedCount = localStorage.getItem('engboost_count');
+                const savedDate = localStorage.getItem('engboost_date');
+                const today = new Date().toDateString();
+
+                // 如果是新的一天，重置进度
+                if (savedDate !== today) {
+                    this.state.learnedCount = 0;
+                    localStorage.setItem('engboost_date', today);
+                } else {
+                    this.state.learnedCount = parseInt(savedCount) || 0;
+                }
+
+                this.state.currentList = this.data.vocab;
+                this.updateUI();
+            },
+
+            switchMode(mode) {
+                this.state.currentMode = mode;
+                this.state.currentList = mode === 'vocab' ? this.data.vocab : this.data.speaking;
+                this.state.currentIndex = 0; // 切换模式重置索引，但不重置已学数量
+                
+                // UI更新
+                document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                this.resetCard();
+                this.updateUI();
+            },
+
+            flipCard(e) {
+                // 如果点击的是按钮，不要翻转
+                if (e.target.closest('button')) return;
+                document.getElementById('flashcard').classList.toggle('is-flipped');
+            },
+
+            resetCard() {
+                document.getElementById('flashcard').classList.remove('is-flipped');
+            },
+
+            updateUI() {
+                const item = this.state.currentList[this.state.currentIndex % this.state.currentList.length];
+                
+                // 填充卡片内容
+                document.getElementById('word').textContent = item.word;
+                document.getElementById('pron').textContent = item.pron;
+                document.getElementById('tag').textContent = item.tag;
+                document.getElementById('definition').textContent = item.def;
+                document.getElementById('ex-en').textContent = item.en;
+                document.getElementById('ex-cn').textContent = item.cn;
+
+                // 更新进度条
+                const percent = Math.min((this.state.learnedCount / this.state.dailyGoal) * 100, 100);
+                document.getElementById('progress-bar').style.width = percent + '%';
+                document.getElementById('progress-count').textContent = this.state.learnedCount;
+            },
+
+            speak(e, type) {
+                e.stopPropagation(); // 阻止卡片翻转
+                const item = this.state.currentList[this.state.currentIndex % this.state.currentList.length];
+                const text = type === 'word' ? item.word : item.en;
+                
+                // 停止之前的发音
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US'; // 设置为美式英语，也可以改成 'en-GB'
+                utterance.rate = 0.9; // 稍微慢一点点，更适合学习
+                window.speechSynthesis.speak(utterance);
+            },
+
+            handleResult(known) {
+                if (known) {
+                    this.state.learnedCount++;
+                    this.saveProgress();
+                    this.showToast();
+                }
+                
+                this.state.currentIndex++;
+                this.resetCard();
+                
+                // 稍微延迟一点更新内容，让翻转动画更自然
+                setTimeout(() => {
+                    this.updateUI();
+                }, 200);
+            },
+
+            saveProgress() {
+                localStorage.setItem('engboost_count', this.state.learnedCount);
+                localStorage.setItem('engboost_date', new Date().toDateString());
+            },
+
+            showToast() {
+                const toast = document.getElementById('toast');
+                toast.style.opacity = '1';
+                setTimeout(() => toast.style.opacity = '0', 1500);
+            }
+        };
+
+        // 启动应用
+        app.init();
+    </script>
+</body>
+</html>
